@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>FinTrack — Finanzas personales</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E💰%3C/text%3E%3C/svg%3E">
+<style>
+/* ============ Base ============ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+:root {
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --primary: #2563eb;
+  --primary-fg: #ffffff;
+  --income: #16a34a;
+  --expense: #dc2626;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.06);
+  --shadow: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+  --shadow-lg: 0 20px 40px rgba(15,23,42,.18);
+  --transition: 180ms ease;
+}
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --surface: #111a2e;
+  --surface-2: #1a2540;
+  --text: #e6edf7;
+  --muted: #94a3b8;
+  --border: #26334d;
+  --primary: #3b82f6;
+  --income: #22c55e;
+  --expense: #f87171;
+  --warning: #fbbf24;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow: 0 1px 3px rgba(0,0,0,.5);
+  --shadow-lg: 0 20px 40px rgba(0,0,0,.6);
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 15px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============ Layout ============ */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--surface); border-right: 1px solid var(--border);
+  padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 18px;
+  position: sticky; top: 0; height: 100vh;
+}
+.brand { display: flex; gap: 10px; align-items: center; padding: 4px 6px; }
+.brand-logo { font-size: 26px; }
+.brand-name { font-weight: 700; font-size: 17px; }
+.brand-sub { font-size: 12px; color: var(--muted); }
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; gap: 10px; align-items: center;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  color: var(--text); text-decoration: none; font-weight: 500;
+  transition: background var(--transition), color var(--transition);
+}
+.nav-item:hover { background: var(--surface-2); }
+.nav-item.active { background: var(--primary); color: var(--primary-fg); }
+.nav-icon { font-size: 17px; }
+
+.sidebar-footer { margin-top: auto; }
+
+.main {
+  flex: 1; min-width: 0;
+  padding: 24px clamp(16px, 3vw, 32px) 40px;
+  max-width: 1240px; width: 100%; margin: 0 auto;
+}
+.main:focus { outline: none; }
+
+.bottomnav { display: none; }
+
+@media (max-width: 860px) {
+  .sidebar { display: none; }
+  .main { padding-bottom: 96px; }
+  .bottomnav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    z-index: 40; overflow-x: auto;
+  }
+  .bottomnav .nav-item {
+    flex: 0 0 auto; min-width: 62px;
+    flex-direction: column; gap: 2px; padding: 6px 4px;
+    font-size: 10.5px; text-align: center;
+  }
+  .bottomnav .nav-icon { font-size: 18px; }
+}
+
+/* ============ Headers y grillas ============ */
+.page-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.page-head h1 { margin: 0; font-size: clamp(22px, 3vw, 28px); letter-spacing: -.01em; }
+.page-head p { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.grid { display: grid; gap: 16px; margin-bottom: 18px; }
+.stats-grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.two-col { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+/* ============ Cards ============ */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow-sm); margin-bottom: 18px;
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; margin-bottom: 14px;
+}
+.card-head h3 { margin: 0; font-size: 15px; font-weight: 600; }
+
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+.stat-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.stat-value {
+  font-size: clamp(20px, 2.6vw, 26px); font-weight: 700;
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+
+/* ============ Botones ============ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 14px; border-radius: var(--radius-sm);
+  border: 1px solid transparent; background: var(--surface-2); color: var(--text);
+  font: inherit; font-weight: 600; font-size: 14px; cursor: pointer;
+  transition: transform var(--transition), background var(--transition),
+              border-color var(--transition), opacity var(--transition), filter var(--transition);
+}
+.btn:hover { filter: brightness(.97); }
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--primary); color: var(--primary-fg); }
+.btn-income { background: var(--income); color: #fff; }
+.btn-expense { background: var(--expense); color: #fff; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-ghost { background: transparent; border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface-2); }
+
+.icon-btn {
+  background: transparent; border: 0; padding: 6px; border-radius: 8px;
+  cursor: pointer; font-size: 15px; color: var(--muted); line-height: 1;
+}
+.icon-btn:hover { background: var(--surface-2); color: var(--text); }
+
+.link {
+  color: var(--primary); text-decoration: none; font-weight: 600;
+  font-size: 13px; background: none; border: 0; cursor: pointer;
+  padding: 0; font-family: inherit;
+}
+.link:hover { text-decoration: underline; }
+.actions-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ============ Formularios ============ */
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font: inherit; font-size: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+.field .err { color: var(--danger); font-size: 12px; min-height: 14px; }
+
+.input-prefix {
+  display: flex; align-items: stretch;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  overflow: hidden; background: var(--surface);
+}
+.input-prefix span {
+  padding: 0 10px; display: flex; align-items: center;
+  background: var(--surface-2); font-size: 12px; color: var(--muted);
+  border-right: 1px solid var(--border);
+}
+.input-prefix input { border: 0; border-radius: 0; }
+.input-prefix:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.18);
+}
+
+.checkbox { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.filter-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 12px;
+}
+.filter-actions { display: flex; justify-content: flex-end; }
+
+/* ============ Tablas ============ */
+.table-wrap { overflow-x: auto; margin: -6px; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td {
+  padding: 10px 12px; text-align: left;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.table th {
+  font-size: 11.5px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.table tr:last-child td { border-bottom: 0; }
+.table tfoot th { border-top: 2px solid var(--border); border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.row-actions { text-align: right; white-space: nowrap; }
+
+/* ============ Utilidades ============ */
+.pos { color: var(--income); }
+.neg { color: var(--expense); }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.center { text-align: center; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600;
+}
+
+.delta { font-size: 12.5px; font-weight: 600; }
+.delta.up { color: var(--income); }
+.delta.down { color: var(--expense); }
+
+/* ============ Progreso ============ */
+.progress {
+  height: 8px; background: var(--surface-2); border-radius: 999px;
+  overflow: hidden; margin: 8px 0 4px;
+}
+.progress-bar {
+  height: 100%; background: var(--primary); border-radius: 999px;
+  transition: width 400ms ease;
+}
+.progress-bar.warn { background: var(--warning); }
+.progress-bar.danger { background: var(--danger); }
+
+.budget-number { font-size: 26px; font-weight: 700; margin: 4px 0; }
+.budget-number.warn { color: var(--warning); }
+.budget-number.danger { color: var(--danger); }
+.budget-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.budget-row:last-child { border-bottom: 0; }
+.budget-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.budget-actions { margin-top: 4px; }
+
+/* ============ Gráficos ============ */
+.chart-wrap { position: relative; height: 240px; }
+.chart { width: 100%; height: 100%; display: block; }
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 16px;
+  margin-top: 12px; font-size: 13px;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.legend-item b { color: var(--text); }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* ============ Lista transacciones ============ */
+.tx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tx-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.tx-row:last-child { border-bottom: 0; }
+.tx-icon {
+  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-size: 18px; flex-shrink: 0;
+}
+.tx-main { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.tx-desc { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-meta { font-size: 12px; color: var(--muted); }
+.tx-amount { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ============ Categorías ============ */
+.cat-list { list-style: none; margin: 0; padding: 0; }
+.cat-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.cat-item:last-child { border-bottom: 0; }
+.cat-icon {
+  width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; font-size: 18px; flex-shrink: 0;
+}
+.cat-info { flex: 1; min-width: 0; }
+.cat-name { font-weight: 600; font-size: 14px; }
+.cat-actions { display: flex; gap: 4px; }
+
+/* ============ Top list ============ */
+.top-list { list-style: none; margin: 0; padding: 0; }
+.top-list li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.top-list li:last-child { border-bottom: 0; }
+.top-list .rank {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.top-amount { margin-left: auto; font-weight: 700; }
+
+/* ============ Atajos ============ */
+.shortcuts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+kbd {
+  background: var(--surface-2); border: 1px solid var(--border); border-bottom-width: 2px;
+  border-radius: 6px; padding: 2px 7px; font-size: 12px; font-family: inherit; font-weight: 600;
+}
+
+/* ============ Empty state ============ */
+.empty-state { text-align: center; padding: 40px 16px; }
+.empty-icon { font-size: 42px; margin-bottom: 8px; }
+.empty-state h3 { margin: 0 0 6px; font-size: 16px; }
+.empty-state p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+
+/* ============ Toasts ============ */
+.toast-container {
+  position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 8px; z-index: 100;
+  pointer-events: none;
+}
+@media (min-width: 861px) {
+  .toast-container { bottom: 24px; left: auto; right: 24px; transform: none; }
+}
+.toast {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 14px; border-radius: var(--radius-sm);
+  background: var(--surface); border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg); font-size: 14px;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity 200ms ease, transform 200ms ease;
+  max-width: 92vw;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-success { border-left: 3px solid var(--income); }
+.toast-error   { border-left: 3px solid var(--expense); }
+.toast-info    { border-left: 3px solid var(--primary); }
+
+/* ============ Modales ============ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,23,42,.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; z-index: 200; opacity: 0;
+  transition: opacity 200ms ease;
+}
+.modal-overlay.show { opacity: 1; }
+.modal {
+  background: var(--surface); border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); width: 100%; max-width: 520px;
+  max-height: calc(100vh - 32px); display: flex; flex-direction: column;
+  transform: translateY(10px) scale(.98); transition: transform 200ms ease;
+}
+.modal-overlay.show .modal { transform: none; }
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.modal-header h2 { margin: 0; font-size: 17px; }
+.modal-body { padding: 18px 20px; overflow-y: auto; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.modal-message { margin: 0; color: var(--text); }
+
+/* ============ Impresión ============ */
+@media print {
+  .sidebar, .bottomnav, .page-head .actions,
+  .toast-container, .modal-overlay, .filters,
+  .filter-row, .filter-actions { display: none !important; }
+  .main { padding: 0; max-width: none; }
+  .card { box-shadow: none; border: 1px solid #ddd; page-break-inside: avoid; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">💰</div>
+      <div>
+        <div class="brand-name">FinTrack</div>
+        <div class="brand-sub">Finanzas personales</div>
+      </div>
+    </div>
+    <nav class="nav" id="desktop-nav" aria-label="Navegación principal"></nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost" id="theme-toggle" title="Cambiar tema">🌙 Tema</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main" tabindex="-1"></main>
+
+  <nav class="bottomnav" id="bottom-nav" aria-label="Navegación inferior"></nav>
+</div>
+
+<div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+<div id="modal-root"></div>
+
+<script>
+/* =========================================================
+   FinTrack — Script único autocontenido
+   Orden: utils → store → charts → ui → forms → views → app
+   ========================================================= */
+(function () {
+'use strict';
+
+/* ============ 1) UTILS ============ */
+const Utils = (function () {
+  const pad = n => String(n).padStart(2, '0');
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  };
+  const parseISO = iso => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const isoFromDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  function formatDate(iso, fmt) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    const map = { YYYY: y, MM: m, DD: d, M: String(+m), D: String(+d) };
+    return (fmt || 'DD/MM/YYYY').replace(/YYYY|MM|DD|M|D/g, k => map[k]);
+  }
+  const formatDateLong = iso =>
+    parseISO(iso).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+  function formatMoney(n, currency) {
+    n = Number(n) || 0;
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency', currency,
+        maximumFractionDigits: 2, minimumFractionDigits: 2
+      }).format(n);
+    } catch (e) { return `${currency} ${n.toFixed(2)}`; }
+  }
+  const monthKey = iso => iso.slice(0, 7);
+  function monthLabel(key) {
+    const [y, m] = key.split('-');
+    return new Date(+y, +m - 1, 1)
+      .toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+  }
+  function currentMonthKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  }
+  function addMonths(key, delta) {
+    const [y, m] = key.split('-').map(Number);
+    const d = new Date(y, m - 1 + delta, 1);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+  }
+  function startOfWeekISO() {
+    const d = new Date();
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    return isoFromDate(d);
+  }
+  function percentChange(current, previous) {
+    if (previous === 0) return current === 0 ? 0 : (current > 0 ? 100 : -100);
+    return ((current - previous) / Math.abs(previous)) * 100;
+  }
+  const escapeHtml = s =>
+    String(s == null ? '' : s).replace(/[&<>"']/g,
+      c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+  function download(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 800);
+  }
+  return {
+    pad, uuid, todayISO, parseISO, isoFromDate, formatDate, formatDateLong,
+    formatMoney, monthKey, monthLabel, currentMonthKey, addMonths,
+    startOfWeekISO, percentChange, escapeHtml, debounce, download
+  };
+})();
+
+/* ============ 2) STORE ============ */
+const Store = (function () {
+  const KEY = 'fintrack_v1';
+  const DEFAULT_CATEGORIES = [
+    { name: 'Vivienda',            icon: '🏠', color: '#3b82f6', type: 'expense' },
+    { name: 'Alimentación',        icon: '🍽️', color: '#ef4444', type: 'expense' },
+    { name: 'Transporte',          icon: '🚗', color: '#f59e0b', type: 'expense' },
+    { name: 'Servicios',           icon: '💡', color: '#eab308', type: 'expense' },
+    { name: 'Salud',               icon: '🏥', color: '#10b981', type: 'expense' },
+    { name: 'Educación',           icon: '📚', color: '#6366f1', type: 'expense' },
+    { name: 'Entretenimiento',     icon: '🎬', color: '#ec4899', type: 'expense' },
+    { name: 'Ropa y calzado',      icon: '👕', color: '#14b8a6', type: 'expense' },
+    { name: 'Deudas y préstamos',  icon: '💳', color: '#f43f5e', type: 'expense' },
+    { name: 'Ahorro e inversión',  icon: '🏦', color: '#22c55e', type: 'expense' },
+    { name: 'Seguros',             icon: '🛡️', color: '#0ea5e9', type: 'expense' },
+    { name: 'Cuidado personal',    icon: '💅', color: '#d946ef', type: 'expense' },
+    { name: 'Mascotas',            icon: '🐾', color: '#a855f7', type: 'expense' },
+    { name: 'Regalos y donaciones',icon: '🎁', color: '#fb7185', type: 'expense' },
+    { name: 'Imprevistos',         icon: '⚠️', color: '#f97316', type: 'expense' },
+    { name: 'Impuestos',           icon: '📋', color: '#64748b', type: 'expense' },
+    { name: 'Familia e hijos',     icon: '👨‍👩‍👧', color: '#8b5cf6', type: 'expense' },
+    { name: 'Salario',             icon: '💼', color: '#22c55e', type: 'income' },
+    { name: 'Freelance',           icon: '💻', color: '#10b981', type: 'income' },
+    { name: 'Inversiones',         icon: '📈', color: '#0ea5e9', type: 'income' },
+    { name: 'Regalos',             icon: '🎁', color: '#ec4899', type: 'income' },
+    { name: 'Ventas',              icon: '💵', color: '#14b8a6', type: 'income' },
+    { name: 'Reembolsos',          icon: '🔁', color: '#6366f1', type: 'income' },
+    { name: 'Otros ingresos',      icon: '❓', color: '#64748b', type: 'income' }
+  ];
+
+  let state = null;
+  const listeners = new Set();
+
+  function defaultState() {
+    return {
+      version: 1,
+      settings: {
+        userName: '', currency: 'USD', dateFormat: 'DD/MM/YYYY',
+        theme: 'light', globalBudget: null
+      },
+      categories: DEFAULT_CATEGORIES.map((c, i) => ({
+        id: Utils.uuid(), name: c.name, icon: c.icon, color: c.color,
+        type: c.type, budget: null, createdAt: Date.now() + i
+      })),
+      transactions: [],
+      meta: { createdAt: Date.now(), lastRecurringRun: null }
+    };
+  }
+  function normalizeTx(t) {
+    return {
+      id: t.id || Utils.uuid(),
+      type: t.type === 'income' ? 'income' : 'expense',
+      amount: Number(t.amount) || 0,
+      categoryId: t.categoryId || null,
+      subcategory: t.subcategory || '',
+      description: t.description || '',
+      date: /^\d{4}-\d{2}-\d{2}$/.test(t.date) ? t.date : Utils.todayISO(),
+      paymentMethod: t.paymentMethod || '',
+      recurring: !!t.recurring,
+      notes: t.notes || '',
+      tags: Array.isArray(t.tags) ? t.tags : [],
+      sourceId: t.sourceId || null,
+      createdAt: t.createdAt || Date.now()
+    };
+  }
+  function normalize(obj) {
+    const base = defaultState();
+    const s = obj && typeof obj === 'object' ? obj : {};
+    return {
+      version: 1,
+      settings: { ...base.settings, ...(s.settings || {}) },
+      categories: Array.isArray(s.categories) && s.categories.length
+        ? s.categories.map(c => ({
+            id: c.id || Utils.uuid(),
+            name: String(c.name || 'Sin nombre'),
+            icon: c.icon || '🏷️',
+            color: c.color || '#64748b',
+            type: (c.type === 'income' || c.type === 'expense') ? c.type : 'both',
+            budget: typeof c.budget === 'number' && c.budget > 0 ? c.budget : null,
+            createdAt: c.createdAt || Date.now()
+          }))
+        : base.categories,
+      transactions: Array.isArray(s.transactions)
+        ? s.transactions.filter(t => t && typeof t === 'object').map(normalizeTx)
+        : [],
+      meta: { ...base.meta, ...(s.meta || {}) }
+    };
+  }
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      state = raw ? normalize(JSON.parse(raw)) : defaultState();
+    } catch (e) {
+      console.error('FinTrack: error al cargar', e);
+      state = defaultState();
+    }
+    persist();
+  }
+  function persist() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); return true; }
+    catch (e) {
+      console.error('FinTrack: error al guardar', e);
+      if (UI && UI.toast) UI.toast('No se pudo guardar (¿almacenamiento lleno?)', 'error');
+      return false;
+    }
+  }
+  function emit() { listeners.forEach(fn => { try { fn(state); } catch (e) { console.error(e); } }); }
+  const commit = () => { persist(); emit(); };
+
+  const get = () => state;
+  const getSettings = () => state.settings;
+  function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+  const categoryById = id => state.categories.find(c => c.id === id) || null;
+  const categoriesFor = type => state.categories.filter(c => c.type === type || c.type === 'both');
+
+  function addTransaction(data) {
+    const tx = normalizeTx({ ...data, id: Utils.uuid(), createdAt: Date.now() });
+    state.transactions.push(tx); commit(); return tx;
+  }
+  function updateTransaction(id, data) {
+    const idx = state.transactions.findIndex(t => t.id === id);
+    if (idx < 0) return null;
+    state.transactions[idx] = normalizeTx({ ...state.transactions[idx], ...data, id });
+    commit(); return state.transactions[idx];
+  }
+  function deleteTransaction(id) {
+    const before = state.transactions.length;
+    state.transactions = state.transactions.filter(t => t.id !== id);
+    if (state.transactions.length !== before) { commit(); return true; }
+    return false;
+  }
+  function addCategory(data) {
+    const cat = {
+      id: Utils.uuid(),
+      name: String(data.name || '').trim() || 'Sin nombre',
+      icon: (data.icon || '🏷️').trim() || '🏷️',
+      color: data.color || '#64748b',
+      type: (data.type === 'income' || data.type === 'expense') ? data.type : 'both',
+      budget: typeof data.budget === 'number' && data.budget > 0 ? data.budget : null,
+      createdAt: Date.now()
+    };
+    state.categories.push(cat); commit(); return cat;
+  }
+  function updateCategory(id, data) {
+    const cat = state.categories.find(c => c.id === id);
+    if (!cat) return null;
+    if (data.name !== undefined) cat.name = String(data.name).trim() || cat.name;
+    if (data.icon !== undefined) cat.icon = data.icon || cat.icon;
+    if (data.color !== undefined) cat.color = data.color || cat.color;
+    if (data.type !== undefined) cat.type = data.type;
+    if (data.budget !== undefined)
+      cat.budget = typeof data.budget === 'number' && data.budget > 0 ? data.budget : null;
+    commit(); return cat;
+  }
+  function deleteCategory(id) {
+    if (state.transactions.some(t => t.categoryId === id)) return { ok: false, reason: 'in-use' };
+    state.categories = state.categories.filter(c => c.id !== id);
+    commit(); return { ok: true };
+  }
+  function updateSettings(patch) { state.settings = { ...state.settings, ...patch }; commit(); }
+
+  const transactionsInMonth = mk => state.transactions.filter(t => t.date.slice(0, 7) === mk);
+  const sumByType = (list, type) => list.filter(t => t.type === type).reduce((s, t) => s + t.amount, 0);
+  function monthTotals(mk) {
+    const list = transactionsInMonth(mk);
+    const income = sumByType(list, 'income');
+    const expense = sumByType(list, 'expense');
+    return { income, expense, balance: income - expense, count: list.length };
+  }
+  function expenseByCategory(mk) {
+    const map = new Map();
+    transactionsInMonth(mk).filter(t => t.type === 'expense').forEach(t => {
+      map.set(t.categoryId, (map.get(t.categoryId) || 0) + t.amount);
+    });
+    return [...map.entries()].map(([categoryId, total]) => ({ categoryId, total }))
+      .sort((a, b) => b.total - a.total);
+  }
+  const exportJSON = () => JSON.stringify(state, null, 2);
+  function exportCSV() {
+    const catMap = new Map(state.categories.map(c => [c.id, c]));
+    const rows = [['id','tipo','fecha','monto','categoria','subcategoria','descripcion','metodo_pago','recurrente','notas','tags']];
+    state.transactions.slice().sort((a, b) => a.date.localeCompare(b.date)).forEach(t => {
+      const c = catMap.get(t.categoryId);
+      rows.push([
+        t.id, t.type === 'income' ? 'ingreso' : 'gasto', t.date, t.amount,
+        c ? c.name : '', t.subcategory || '', t.description || '',
+        t.paymentMethod || '', t.recurring ? 'sí' : 'no',
+        t.notes || '', (t.tags || []).join('|')
+      ]);
+    });
+    return rows.map(r => r.map(v => {
+      const s = String(v == null ? '' : v);
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',')).join('\n');
+  }
+  function importJSON(obj) {
+    if (!obj || typeof obj !== 'object') throw new Error('Formato inválido');
+    if (!Array.isArray(obj.transactions) || !Array.isArray(obj.categories))
+      throw new Error('Faltan campos requeridos (transactions, categories)');
+    state = normalize(obj); commit(); return true;
+  }
+  function seedSample() {
+    const find = (name, type) => state.categories.find(c => c.name === name && (c.type === type || c.type === 'both'));
+    const salary = find('Salario', 'income');
+    const freelance = find('Freelance', 'income');
+    const food = find('Alimentación', 'expense');
+    const housing = find('Vivienda', 'expense');
+    const transport = find('Transporte', 'expense');
+    const services = find('Servicios', 'expense');
+    const fun = find('Entretenimiento', 'expense');
+    const now = new Date();
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mk = `${d.getFullYear()}-${Utils.pad(d.getMonth() + 1)}`;
+      const add = (t) => state.transactions.push(normalizeTx(t));
+      add({ type: 'income',  amount: 2500 + Math.round(Math.random() * 300), categoryId: salary.id,    description: 'Salario mensual',  date: `${mk}-01` });
+      add({ type: 'income',  amount: 400 + Math.round(Math.random() * 400),  categoryId: freelance.id, description: 'Proyecto freelance', date: `${mk}-15` });
+      add({ type: 'expense', amount: 900,                                    categoryId: housing.id,   description: 'Renta',              date: `${mk}-05` });
+      add({ type: 'expense', amount: 350 + Math.round(Math.random() * 150),  categoryId: food.id,      description: 'Supermercado',       date: `${mk}-07`, paymentMethod: 'tarjeta débito' });
+      add({ type: 'expense', amount: 120 + Math.round(Math.random() * 80),   categoryId: food.id,      description: 'Restaurantes',       date: `${mk}-12`, paymentMethod: 'tarjeta crédito' });
+      add({ type: 'expense', amount: 180,                                    categoryId: transport.id, description: 'Gasolina',           date: `${mk}-09`, paymentMethod: 'efectivo' });
+      add({ type: 'expense', amount: 210,                                    categoryId: services.id,  description: 'Luz, agua e internet', date: `${mk}-10`, paymentMethod: 'transferencia' });
+      add({ type: 'expense', amount: 90 + Math.round(Math.random() * 60),    categoryId: fun.id,       description: 'Cine y salidas',     date: `${mk}-20`, paymentMethod: 'tarjeta crédito' });
+    }
+    if (food)      food.budget = 400;
+    if (transport) transport.budget = 250;
+    if (fun)       fun.budget = 150;
+    state.settings.globalBudget = 2000;
+    commit();
+  }
+  function processRecurring() {
+    const current = Utils.currentMonthKey();
+    if (state.meta.lastRecurringRun === current) return 0;
+    let created = 0;
+    state.transactions.filter(t => t.recurring).forEach(t => {
+      if (t.date.slice(0, 7) >= current) return;
+      if (state.transactions.some(x => x.sourceId === t.id && x.date.slice(0, 7) === current)) return;
+      const day = Math.min(Number(t.date.slice(8, 10)), 28);
+      state.transactions.push({
+        ...t, id: Utils.uuid(),
+        date: `${current}-${Utils.pad(day)}`,
+        sourceId: t.id, createdAt: Date.now()
+      });
+      created++;
+    });
+    state.meta.lastRecurringRun = current;
+    persist(); return created;
+  }
+  function clearAll() { state = defaultState(); commit(); }
+
+  return {
+    init() { load(); },
+    get, getSettings, subscribe,
+    categoryById, categoriesFor,
+    addTransaction, updateTransaction, deleteTransaction,
+    addCategory, updateCategory, deleteCategory,
+    updateSettings,
+    transactionsInMonth, monthTotals, expenseByCategory,
+    exportJSON, exportCSV, importJSON,
+    seedSample, processRecurring, clearAll,
+    DEFAULT_CATEGORIES
+  };
+})();
+
+/* ============ 3) CHARTS ============ */
+const Charts = (function () {
+  function setup(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(rect.width, 10);
+    const h = Math.max(rect.height, 10);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    return { ctx, w, h };
+  }
+  const themeColor = name =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#000';
+
+  function donut(canvas, data, centerLabel) {
+    const { ctx, w, h } = setup(canvas);
+    const total = data.reduce((s, d) => s + d.value, 0);
+    if (total <= 0) {
+      ctx.fillStyle = themeColor('--muted');
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('Sin datos', w / 2, h / 2);
+      return;
+    }
+    const cx = w / 2, cy = h / 2;
+    const outer = Math.min(w, h) / 2 - 6;
+    const inner = outer * 0.62;
+    let start = -Math.PI / 2;
+    data.forEach(d => {
+      const angle = (d.value / total) * Math.PI * 2;
+      if (angle <= 0) return;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outer, start, start + angle);
+      ctx.arc(cx, cy, inner, start + angle, start, true);
+      ctx.closePath();
+      ctx.fillStyle = d.color; ctx.fill();
+      start += angle;
+    });
+    ctx.fillStyle = themeColor('--muted');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = '600 12px system-ui, sans-serif';
+    ctx.fillText(centerLabel ? centerLabel[0] : 'Total', cx, cy - 11);
+    ctx.fillStyle = themeColor('--text');
+    ctx.font = '700 15px system-ui, sans-serif';
+    ctx.fillText(centerLabel ? centerLabel[1] : String(total), cx, cy + 10);
+  }
+  function bars(canvas, data) {
+    const { ctx, w, h } = setup(canvas);
+    const padL = 8, padR = 8, padT = 12, padB = 28;
+    const chartW = w - padL - padR;
+    const chartH = h - padT - padB;
+    const max = Math.max(1, ...data.map(d => Math.max(d.income, d.expense)));
+    const groupW = chartW / data.length;
+    const barW = Math.max(4, Math.min(18, groupW * 0.32));
+    const gap = 4;
+    const incomeColor = themeColor('--income');
+    const expenseColor = themeColor('--expense');
+    const mutedColor = themeColor('--muted');
+    const border = themeColor('--border');
+    ctx.strokeStyle = border; ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const y = padT + (chartH * i) / 4;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    }
+    data.forEach((d, i) => {
+      const cx = padL + groupW * i + groupW / 2;
+      const ih = (d.income / max) * chartH;
+      const eh = (d.expense / max) * chartH;
+      ctx.fillStyle = incomeColor;
+      ctx.fillRect(cx - barW - gap / 2, padT + chartH - ih, barW, ih);
+      ctx.fillStyle = expenseColor;
+      ctx.fillRect(cx + gap / 2, padT + chartH - eh, barW, eh);
+      ctx.fillStyle = mutedColor;
+      ctx.font = '11px system-ui, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(d.label, cx, padT + chartH + 6);
+    });
+  }
+  return { donut, bars };
+})();
+
+/* ============ 4) UI (toast/modal/confirm/emptyState) ============ */
+const UI = (function () {
+  function toast(message, type = 'info', timeout = 3200) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.setAttribute('role', 'status');
+    const icon = type === 'error' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️';
+    el.innerHTML = `<span>${icon}</span><span>${Utils.escapeHtml(message)}</span>`;
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => {
+      el.classList.remove('show');
+      setTimeout(() => el.remove(), 250);
+    }, timeout);
+  }
+  function modal({ title, body, footer, onMount }) {
+    const root = document.getElementById('modal-root');
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" aria-label="${Utils.escapeHtml(title || '')}">
+        <div class="modal-header">
+          <h2>${Utils.escapeHtml(title || '')}</h2>
+          <button class="icon-btn modal-close" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body"></div>
+        ${footer ? '<div class="modal-footer"></div>' : ''}
+      </div>`;
+    const bodyEl = overlay.querySelector('.modal-body');
+    if (typeof body === 'string') bodyEl.innerHTML = body;
+    else if (body) bodyEl.appendChild(body);
+    if (footer) {
+      const f = overlay.querySelector('.modal-footer');
+      if (typeof footer === 'string') f.innerHTML = footer;
+      else f.appendChild(footer);
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+    function close() {
+      document.removeEventListener('keydown', onKey);
+      overlay.classList.remove('show');
+      setTimeout(() => overlay.remove(), 200);
+    }
+    overlay.querySelector('.modal-close').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', onKey);
+    root.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+    if (onMount) onMount({ overlay, body: bodyEl, close });
+    return { close, overlay };
+  }
+  function confirm({
+    title = 'Confirmar', message = '',
+    confirmText = 'Aceptar', cancelText = 'Cancelar', danger = false
+  }) {
+    return new Promise(resolve => {
+      const footer = document.createElement('div');
+      footer.className = 'modal-actions';
+      footer.innerHTML = `
+        <button type="button" class="btn btn-ghost" data-act="cancel">${Utils.escapeHtml(cancelText)}</button>
+        <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-act="ok">${Utils.escapeHtml(confirmText)}</button>`;
+      const m = modal({
+        title,
+        body: `<p class="modal-message">${Utils.escapeHtml(message)}</p>`,
+        footer
+      });
+      footer.querySelector('[data-act="cancel"]').addEventListener('click', () => { m.close(); resolve(false); });
+      footer.querySelector('[data-act="ok"]').addEventListener('click', () => { m.close(); resolve(true); });
+      m.overlay.addEventListener('click', e => { if (e.target === m.overlay) resolve(false); });
+    });
+  }
+  function emptyState({ icon = '📭', title, text, action }) {
+    return `<div class="empty-state">
+      <div class="empty-icon">${icon}</div>
+      <h3>${Utils.escapeHtml(title)}</h3>
+      <p>${Utils.escapeHtml(text)}</p>
+      ${action || ''}
+    </div>`;
+  }
+  return { toast, modal, confirm, emptyState };
+})();
+
+/* ============ 5) FORMS ============ */
+const Forms = (function () {
+  const PAYMENT_METHODS = ['efectivo', 'tarjeta débito', 'tarjeta crédito', 'transferencia', 'otro'];
+
+  function transactionForm({ type, transaction, onSaved }) {
+    const isEdit = !!transaction;
+    const t = transaction || {};
+    const cats = Store.categoriesFor(type);
+    const currency = Store.getSettings().currency;
+    const form = document.createElement('form');
+    form.className = 'form';
+    form.noValidate = true;
+    form.innerHTML = `
+      <div class="field">
+        <label for="tx-amount">Monto *</label>
+        <div class="input-prefix">
+          <span>${Utils.escapeHtml(currency)}</span>
+          <input id="tx-amount" name="amount" type="number" inputmode="decimal"
+                 step="0.01" min="0.01" required
+                 value="${t.amount ?? ''}" placeholder="0.00">
+        </div>
+        <small class="err" data-err="amount"></small>
+      </div>
+      <div class="field">
+        <label for="tx-date">Fecha *</label>
+        <input id="tx-date" name="date" type="date" required value="${t.date || Utils.todayISO()}">
+        <small class="err" data-err="date"></small>
+      </div>
+      <div class="field">
+        <label for="tx-category">Categoría *</label>
+        <select id="tx-category" name="categoryId" required>
+          <option value="">Selecciona una categoría</option>
+          ${cats.map(c => `<option value="${c.id}" ${t.categoryId === c.id ? 'selected' : ''}>${c.icon} ${Utils.escapeHtml(c.name)}</option>`).join('')}
+        </select>
+        <small class="err" data-err="categoryId"></small>
+      </div>
+      ${type === 'expense' ? `
+      <div class="field">
+        <label for="tx-sub">Subcategoría</label>
+        <input id="tx-sub" name="subcategory" type="text"
+               value="${Utils.escapeHtml(t.subcategory || '')}" placeholder="Ej. Supermercado">
+      </div>
+      <div class="field">
+        <label for="tx-pay">Método de pago</label>
+        <select id="tx-pay" name="paymentMethod">
+          <option value="">—</option>
+          ${PAYMENT_METHODS.map(m => `<option value="${m}" ${t.paymentMethod === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>` : ''}
+      <div class="field">
+        <label for="tx-desc">Descripción</label>
+        <input id="tx-desc" name="description" type="text"
+               value="${Utils.escapeHtml(t.description || '')}" placeholder="Ej. Compra semanal">
+      </div>
+      <div class="field">
+        <label for="tx-notes">Notas</label>
+        <textarea id="tx-notes" name="notes" rows="2" placeholder="Opcional">${Utils.escapeHtml(t.notes || '')}</textarea>
+      </div>
+      <div class="field">
+        <label for="tx-tags">Etiquetas</label>
+        <input id="tx-tags" name="tags" type="text"
+               value="${(t.tags || []).join(', ')}" placeholder="Ej. verano, urgente">
+      </div>
+      <label class="checkbox">
+        <input type="checkbox" name="recurring" ${t.recurring ? 'checked' : ''}>
+        <span>Transacción recurrente (mensual)</span>
+      </label>
+    `;
+    const footer = document.createElement('div');
+    footer.className = 'modal-actions';
+    footer.innerHTML = `
+      <button type="button" class="btn btn-ghost" data-act="cancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" data-act="save">
+        ${isEdit ? 'Guardar cambios' : (type === 'income' ? 'Añadir ingreso' : 'Añadir gasto')}
+      </button>`;
+    const title = isEdit
+      ? (type === 'income' ? 'Editar ingreso' : 'Editar gasto')
+      : (type === 'income' ? 'Nuevo ingreso' : 'Nuevo gasto');
+    const m = UI.modal({ title, body: form, footer });
+    footer.querySelector('[data-act="cancel"]').addEventListener('click', () => m.close());
+    footer.querySelector('[data-act="save"]').addEventListener('click', () => form.requestSubmit());
+    setTimeout(() => { const el = form.querySelector('#tx-amount'); if (el) el.focus(); }, 60);
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      form.querySelectorAll('.err').forEach(el => el.textContent = '');
+      const fd = new FormData(form);
+      const amount = parseFloat(fd.get('amount'));
+      const date = (fd.get('date') || '').toString();
+      const categoryId = (fd.get('categoryId') || '').toString();
+      let ok = true;
+      if (!(amount > 0)) { form.querySelector('[data-err="amount"]').textContent = 'El monto debe ser mayor a 0'; ok = false; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { form.querySelector('[data-err="date"]').textContent = 'Fecha inválida'; ok = false; }
+      if (!categoryId) { form.querySelector('[data-err="categoryId"]').textContent = 'Selecciona una categoría'; ok = false; }
+      if (!ok) return;
+      const data = {
+        type, amount, date, categoryId,
+        subcategory: (fd.get('subcategory') || '').toString().trim(),
+        paymentMethod: (fd.get('paymentMethod') || '').toString(),
+        description: (fd.get('description') || '').toString().trim(),
+        notes: (fd.get('notes') || '').toString().trim(),
+        tags: (fd.get('tags') || '').toString().split(',').map(s => s.trim()).filter(Boolean),
+        recurring: fd.get('recurring') === 'on'
+      };
+      try {
+        if (isEdit) Store.updateTransaction(t.id, data);
+        else        Store.addTransaction(data);
+        UI.toast(isEdit ? 'Actualizado correctamente'
+                        : (type === 'income' ? 'Ingreso añadido' : 'Gasto añadido'), 'success');
+        m.close();
+        if (onSaved) onSaved();
+      } catch (err) {
+        console.error(err);
+        UI.toast('No se pudo guardar la transacción', 'error');
+      }
+    });
+  }
+  function categoryForm({ category, onSaved } = {}) {
+    const isEdit = !!category;
+    const c = category || { type: 'expense', icon: '🏷️', color: '#64748b' };
+    const form = document.createElement('form');
+    form.className = 'form';
+    form.noValidate = true;
+    form.innerHTML = `
+      <div class="field">
+        <label>Nombre *</label>
+        <input name="name" type="text" required value="${Utils.escapeHtml(c.name || '')}" placeholder="Ej. Suscripciones">
+        <small class="err" data-err="name"></small>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Icono (emoji)</label>
+          <input name="icon" type="text" maxlength="4" value="${Utils.escapeHtml(c.icon || '🏷️')}">
+        </div>
+        <div class="field">
+          <label>Color</label>
+          <input name="color" type="color" value="${c.color || '#64748b'}">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tipo</label>
+        <select name="type">
+          <option value="expense" ${c.type === 'expense' ? 'selected' : ''}>Gasto</option>
+          <option value="income"  ${c.type === 'income'  ? 'selected' : ''}>Ingreso</option>
+          <option value="both"    ${c.type === 'both'    ? 'selected' : ''}>Ambos</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Presupuesto mensual (opcional)</label>
+        <input name="budget" type="number" min="0" step="0.01"
+               value="${c.budget ?? ''}" placeholder="Sin presupuesto">
+      </div>
+    `;
+    const footer = document.createElement('div');
+    footer.className = 'modal-actions';
+    footer.innerHTML = `
+      <button type="button" class="btn btn-ghost" data-act="cancel">Cancelar</button>
+      <button type="button" class="btn btn-primary" data-act="save">${isEdit ? 'Guardar' : 'Crear'}</button>`;
+    const m = UI.modal({ title: isEdit ? 'Editar categoría' : 'Nueva categoría', body: form, footer });
+    footer.querySelector('[data-act="cancel"]').addEventListener('click', () => m.close());
+    footer.querySelector('[data-act="save"]').addEventListener('click', () => form.requestSubmit());
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      form.querySelectorAll('.err').forEach(el => el.textContent = '');
+      const fd = new FormData(form);
+      const data = {
+        name: (fd.get('name') || '').toString().trim(),
+        icon: (fd.get('icon') || '🏷️').toString().trim() || '🏷️',
+        color: (fd.get('color') || '#64748b').toString(),
+        type: (fd.get('type') || 'expense').toString(),
+        budget: fd.get('budget') ? parseFloat(fd.get('budget')) : null
+      };
+      if (!data.name) {
+        form.querySelector('[data-err="name"]').textContent = 'El nombre es obligatorio';
+        return;
+      }
+      try {
+        if (isEdit) Store.updateCategory(c.id, data);
+        else        Store.addCategory(data);
+        UI.toast(isEdit ? 'Categoría actualizada' : 'Categoría creada', 'success');
+        m.close();
+        if (onSaved) onSaved();
+      } catch (err) {
+        console.error(err);
+        UI.toast('No se pudo guardar la categoría', 'error');
+      }
+    });
+  }
+  return { transactionForm, categoryForm, PAYMENT_METHODS };
+})();
+
+/* ============ 6) VIEWS ============ */
+const Views = {};
+
+/* --- Dashboard --- */
+Views.dashboard = (function () {
+  function deltaBadge(current, previous, goodWhenUp = true) {
+    const pct = Utils.percentChange(current, previous);
+    if (!isFinite(pct) || (current === 0 && previous === 0)) return '';
+    const up = pct >= 0;
+    const good = goodWhenUp ? up : !up;
+    return `<span class="delta ${good ? 'up' : 'down'}">${up ? '↑' : '↓'} ${Math.abs(pct).toFixed(1)}%</span>`;
+  }
+  function statCard(label, valueHtml, sub) {
+    return `<div class="stat-card">
+      <div class="stat-label">${label}</div>
+      <div class="stat-value">${valueHtml}</div>
+      ${sub || ''}
+    </div>`;
+  }
+  function txRow(t, catMap, currency) {
+    const c = catMap.get(t.categoryId) || { name: 'Sin categoría', icon: '🏷️', color: '#94a3b8' };
+    return `<li class="tx-row">
+      <span class="tx-icon" style="background:${c.color}22;color:${c.color}">${c.icon}</span>
+      <span class="tx-main">
+        <span class="tx-desc">${Utils.escapeHtml(t.description || c.name)}</span>
+        <span class="tx-meta">${Utils.formatDate(t.date, Store.getSettings().dateFormat)} · ${Utils.escapeHtml(c.name)}</span>
+      </span>
+      <span class="tx-amount ${t.type === 'income' ? 'pos' : 'neg'}">
+        ${t.type === 'income' ? '+' : '−'}${Utils.formatMoney(t.amount, currency)}
+      </span>
+    </li>`;
+  }
+  function render(container) {
+    const s = Store.getSettings();
+    const currency = s.currency;
+    const fmt = n => Utils.formatMoney(n, currency);
+    const current = Utils.currentMonthKey();
+    const prev = Utils.addMonths(current, -1);
+    const tCur = Store.monthTotals(current);
+    const tPrev = Store.monthTotals(prev);
+    const all = Store.get().transactions;
+    const totalIncome = all.filter(t => t.type === 'income').reduce((a, b) => a + b.amount, 0);
+    const totalExpense = all.filter(t => t.type === 'expense').reduce((a, b) => a + b.amount, 0);
+    const balanceTotal = totalIncome - totalExpense;
+    const catMap = new Map(Store.get().categories.map(c => [c.id, c]));
+    const donutData = Store.expenseByCategory(current).map(x => {
+      const c = catMap.get(x.categoryId) || { name: 'Sin categoría', color: '#94a3b8' };
+      return { label: c.name, value: x.total, color: c.color };
+    });
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const mk = Utils.addMonths(current, -i);
+      const tt = Store.monthTotals(mk);
+      months.push({ label: Utils.monthLabel(mk).split(' ')[0], income: tt.income, expense: tt.expense });
+    }
+    const recent = all.slice()
+      .sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0))
+      .slice(0, 5);
+    const globalBudget = s.globalBudget;
+    let budgetCard = '';
+    if (globalBudget > 0) {
+      const spent = tCur.expense;
+      const pct = Math.min(100, (spent / globalBudget) * 100);
+      const remaining = globalBudget - spent;
+      const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
+      budgetCard = `<div class="card">
+        <div class="card-head"><h3>Presupuesto restante</h3><span class="muted">${fmt(globalBudget)} / mes</span></div>
+        <div class="budget-number ${cls}">${fmt(Math.max(0, remaining))}</div>
+        <div class="progress"><div class="progress-bar ${cls}" style="width:${pct}%"></div></div>
+        <div class="muted small">Gastado ${fmt(spent)} (${pct.toFixed(0)}%)</div>
+      </div>`;
+    }
+    container.innerHTML = `
+      <header class="page-head">
+        <div>
+          <h1>${s.userName ? `Hola, ${Utils.escapeHtml(s.userName)} 👋` : 'Dashboard'}</h1>
+          <p class="muted">${Utils.formatDateLong(Utils.todayISO())}</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-income" data-action="new-income">＋ Ingreso</button>
+          <button class="btn btn-expense" data-action="new-expense">＋ Gasto</button>
+        </div>
+      </header>
+      <section class="grid stats-grid">
+        ${statCard('Balance total', `<span class="${balanceTotal >= 0 ? 'pos' : 'neg'}">${fmt(balanceTotal)}</span>`)}
+        ${statCard('Ingresos del mes', `<span class="pos">${fmt(tCur.income)}</span>`, deltaBadge(tCur.income, tPrev.income, true))}
+        ${statCard('Gastos del mes', `<span class="neg">${fmt(tCur.expense)}</span>`, deltaBadge(tCur.expense, tPrev.expense, false))}
+        ${statCard('Ahorro del mes', `<span class="${tCur.balance >= 0 ? 'pos' : 'neg'}">${fmt(tCur.balance)}</span>`, deltaBadge(tCur.balance, tPrev.balance, true))}
+      </section>
+      ${budgetCard}
+      <section class="grid two-col">
+        <div class="card">
+          <div class="card-head"><h3>Gastos por categoría</h3><span class="muted">${Utils.monthLabel(current)}</span></div>
+          <div class="chart-wrap"><canvas id="chart-donut" class="chart"></canvas></div>
+          <div class="legend" id="legend-donut"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Ingresos vs Gastos</h3><span class="muted">Últimos 6 meses</span></div>
+          <div class="chart-wrap"><canvas id="chart-bars" class="chart"></canvas></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Últimas transacciones</h3><a class="link" href="#expenses">Ver todas →</a></div>
+        ${recent.length
+          ? `<ul class="tx-list">${recent.map(t => txRow(t, catMap, currency)).join('')}</ul>`
+          : UI.emptyState({ icon: '🧾', title: 'Sin transacciones aún', text: 'Añade tu primer ingreso o gasto para empezar.' })}
+      </section>
+    `;
+    if (donutData.length) {
+      Charts.donut(document.getElementById('chart-donut'), donutData, ['Total', fmt(tCur.expense)]);
+      const total = donutData.reduce((a, b) => a + b.value, 0) || 1;
+      document.getElementById('legend-donut').innerHTML = donutData.slice(0, 6).map(d =>
+        `<span class="legend-item"><span class="dot" style="background:${d.color}"></span>
+         ${Utils.escapeHtml(d.label)} <b>${((d.value / total) * 100).toFixed(0)}%</b></span>`
+      ).join('');
+    } else {
+      Charts.donut(document.getElementById('chart-donut'), [], ['Sin gastos', '']);
+    }
+    Charts.bars(document.getElementById('chart-bars'), months);
+    container.querySelector('[data-action="new-income"]').addEventListener('click',
+      () => Forms.transactionForm({ type: 'income', onSaved: () => App.refresh() }));
+    container.querySelector('[data-action="new-expense"]').addEventListener('click',
+      () => Forms.transactionForm({ type: 'expense', onSaved: () => App.refresh() }));
+  }
+  return { render };
+})();
+
+/* --- Transactions (income/expense) --- */
+Views.income = Views.expense = (function () {
+  const stateMap = new Map();
+  const defaultFilters = () => ({ q: '', range: 'all', category: '', min: null, max: null, from: '', to: '' });
+  function getState(type) {
+    if (!stateMap.has(type)) stateMap.set(type, defaultFilters());
+    return stateMap.get(type);
+  }
+  const rangeLabel = r => ({
+    all: 'Todo', today: 'Hoy', week: 'Esta semana', month: 'Este mes',
+    last30: 'Últimos 30 días', year: 'Este año', custom: 'Personalizado'
+  }[r] || r);
+  function applyFilters(list, f) {
+    let out = list.slice();
+    const q = (f.q || '').trim().toLowerCase();
+    if (q) out = out.filter(t =>
+      (t.description || '').toLowerCase().includes(q) ||
+      (t.notes || '').toLowerCase().includes(q) ||
+      (t.tags || []).join(' ').toLowerCase().includes(q));
+    if (f.category) out = out.filter(t => t.categoryId === f.category);
+    if (f.min != null && !isNaN(f.min)) out = out.filter(t => t.amount >= f.min);
+    if (f.max != null && !isNaN(f.max)) out = out.filter(t => t.amount <= f.max);
+    if (f.range && f.range !== 'all') {
+      const today = Utils.todayISO();
+      const now = new Date();
+      let from = null, to = today;
+      if (f.range === 'today') from = today;
+      else if (f.range === 'week') from = Utils.startOfWeekISO();
+      else if (f.range === 'month') from = `${now.getFullYear()}-${Utils.pad(now.getMonth() + 1)}-01`;
+      else if (f.range === 'last30') { const d = new Date(); d.setDate(d.getDate() - 29); from = Utils.isoFromDate(d); }
+      else if (f.range === 'year') from = `${now.getFullYear()}-01-01`;
+      else if (f.range === 'custom') { from = f.from || null; to = f.to || null; }
+      if (from) out = out.filter(t => t.date >= from);
+      if (to) out = out.filter(t => t.date <= to);
+    }
+    return out.sort((a, b) => b.date.localeCompare(a.date) || (b.createdAt || 0) - (a.createdAt || 0));
+  }
+  function rowHtml(t, catMap, currency, isIncome, fmtDate) {
+    const c = catMap.get(t.categoryId) || { name: 'Sin categoría', icon: '🏷️', color: '#94a3b8' };
+    return `<tr>
+      <td>${Utils.formatDate(t.date, fmtDate)}</td>
+      <td><span class="chip" style="background:${c.color}22;color:${c.color}">${c.icon} ${Utils.escapeHtml(c.name)}</span></td>
+      <td>${Utils.escapeHtml(t.description || '—')}${t.tags && t.tags.length
+        ? '<br><small class="muted">' + t.tags.map(x => '#' + Utils.escapeHtml(x)).join(' ') + '</small>'
+        : ''}</td>
+      ${!isIncome ? `<td><span class="muted">${Utils.escapeHtml(t.paymentMethod || '—')}</span></td>` : ''}
+      <td class="num ${isIncome ? 'pos' : 'neg'}">${isIncome ? '+' : '−'}${Utils.formatMoney(t.amount, currency)}</td>
+      <td class="row-actions">
+        <button class="icon-btn" data-edit="${t.id}" title="Editar" aria-label="Editar">✏️</button>
+        <button class="icon-btn" data-delete="${t.id}" title="Eliminar" aria-label="Eliminar">🗑️</button>
+      </td>
+    </tr>`;
+  }
+  function render(container, type) {
+    const s = Store.getSettings();
+    const currency = s.currency;
+    const fmtDate = s.dateFormat;
+    const isIncome = type === 'income';
+    const viewState = getState(type);
+    const cats = Store.get().categories;
+    const catMap = new Map(cats.map(c => [c.id, c]));
+    const filtered = applyFilters(Store.get().transactions.filter(t => t.type === type), viewState);
+    const total = filtered.reduce((a, b) => a + b.amount, 0);
+    container.innerHTML = `
+      <header class="page-head">
+        <div>
+          <h1>${isIncome ? '💰 Ingresos' : '💸 Gastos'}</h1>
+          <p class="muted">${filtered.length} ${filtered.length === 1 ? 'registro' : 'registros'} · Total ${Utils.formatMoney(total, currency)}</p>
+        </div>
+        <div class="actions">
+          <button class="btn ${isIncome ? 'btn-income' : 'btn-expense'}" data-action="new">
+            ＋ ${isIncome ? 'Nuevo ingreso' : 'Nuevo gasto'}
+          </button>
+        </div>
+      </header>
+      <section class="card filters">
+        <div class="filter-row">
+          <div class="field">
+            <label>Buscar</label>
+            <input type="search" data-filter="q" value="${Utils.escapeHtml(viewState.q)}"
+                   placeholder="Descripción, notas, etiquetas...">
+          </div>
+          <div class="field">
+            <label>Rango</label>
+            <select data-filter="range">
+              ${['all','today','week','month','last30','year','custom'].map(r =>
+                `<option value="${r}" ${viewState.range === r ? 'selected' : ''}>${rangeLabel(r)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Categoría</label>
+            <select data-filter="category">
+              <option value="">Todas</option>
+              ${cats.filter(c => c.type === type || c.type === 'both').map(c =>
+                `<option value="${c.id}" ${viewState.category === c.id ? 'selected' : ''}>${c.icon} ${Utils.escapeHtml(c.name)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Monto mín.</label>
+            <input type="number" data-filter="min" value="${viewState.min ?? ''}" min="0" step="0.01">
+          </div>
+          <div class="field">
+            <label>Monto máx.</label>
+            <input type="number" data-filter="max" value="${viewState.max ?? ''}" min="0" step="0.01">
+          </div>
+        </div>
+        ${viewState.range === 'custom' ? `
+          <div class="filter-row">
+            <div class="field"><label>Desde</label><input type="date" data-filter="from" value="${viewState.from || ''}"></div>
+            <div class="field"><label>Hasta</label><input type="date" data-filter="to" value="${viewState.to || ''}"></div>
+          </div>` : ''}
+        <div class="filter-actions">
+          <button class="btn btn-ghost" data-action="clear-filters">Limpiar filtros</button>
+        </div>
+      </section>
+      <section class="card">
+        ${filtered.length ? `
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr>
+                <th>Fecha</th><th>Categoría</th><th>Descripción</th>
+                ${!isIncome ? '<th>Método</th>' : ''}
+                <th class="num">Monto</th><th></th>
+              </tr></thead>
+              <tbody>${filtered.map(t => rowHtml(t, catMap, currency, isIncome, fmtDate)).join('')}</tbody>
+            </table>
+          </div>` : UI.emptyState({
+            icon: isIncome ? '💵' : '🧾',
+            title: isIncome ? 'Aún no tienes ingresos registrados' : 'Aún no tienes gastos registrados',
+            text: isIncome ? '¡Añade el primero!' : '¡Añade el primero para controlar tus finanzas!',
+            action: `<button class="btn btn-primary" data-action="new">Añadir ${isIncome ? 'ingreso' : 'gasto'}</button>`
+          })}
+      </section>
+    `;
+    container.querySelectorAll('[data-action="new"]').forEach(b => b.addEventListener('click',
+      () => Forms.transactionForm({ type, onSaved: () => App.refresh() })));
+    container.querySelector('[data-action="clear-filters"]').addEventListener('click', () => {
+      stateMap.set(type, defaultFilters());
+      App.refresh();
+    });
+    container.querySelectorAll('[data-filter]').forEach(input => {
+      const handler = Utils.debounce(() => {
+        const key = input.dataset.filter;
+        let val = input.value;
+        if (key === 'min' || key === 'max') val = val === '' ? null : parseFloat(val);
+        viewState[key] = val;
+        App.refresh();
+      }, 220);
+      input.addEventListener('input', handler);
+      input.addEventListener('change', handler);
+    });
+    container.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
+      const tx = Store.get().transactions.find(t => t.id === b.dataset.edit);
+      if (tx) Forms.transactionForm({ type, transaction: tx, onSaved: () => App.refresh() });
+    }));
+    container.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', async () => {
+      const ok = await UI.confirm({
+        title: 'Eliminar registro',
+        message: '¿Seguro que quieres eliminar este registro? Esta acción no se puede deshacer.',
+        confirmText: 'Eliminar', danger: true
+      });
+      if (ok) {
+        Store.deleteTransaction(b.dataset.delete);
+        UI.toast('Registro eliminado', 'success');
+        App.refresh();
+      }
+    }));
+  }
+  return { render: (c, type) => render(c, type) };
+})();
+Views.income.render  = c => Views.income.render(c, 'income');
+Views.expense.render = c => Views.expense.render(c, 'expense');
+
+/* --- Categories --- */
+Views.categories = (function () {
+  function render(container) {
+    const cats = Store.get().categories;
+    const tx = Store.get().transactions;
+    const currency = Store.getSettings().currency;
+    const counts = new Map();
+    tx.forEach(t => counts.set(t.categoryId, (counts.get(t.categoryId) || 0) + 1));
+    const groups = {
+      expense: cats.filter(c => c.type === 'expense'),
+      income:  cats.filter(c => c.type === 'income'),
+      both:    cats.filter(c => c.type === 'both')
+    };
+    const groupTitle = { expense: 'Gastos', income: 'Ingresos', both: 'Ambos' };
+    container.innerHTML = `
+      <header class="page-head">
+        <div><h1>🏷️ Categorías</h1><p class="muted">${cats.length} categorías</p></div>
+        <div class="actions"><button class="btn btn-primary" data-action="new">＋ Nueva categoría</button></div>
+      </header>
+      ${['expense', 'income', 'both'].map(g => groups[g].length ? `
+        <section class="card">
+          <div class="card-head"><h3>${groupTitle[g]}</h3><span class="muted">${groups[g].length}</span></div>
+          <ul class="cat-list">
+            ${groups[g].map(c => `
+              <li class="cat-item">
+                <span class="cat-icon" style="background:${c.color}22;color:${c.color}">${c.icon}</span>
+                <div class="cat-info">
+                  <div class="cat-name">${Utils.escapeHtml(c.name)}</div>
+                  <div class="muted small">
+                    ${counts.get(c.id) || 0} transacciones${c.budget
+                      ? ' · Presupuesto: ' + Utils.formatMoney(c.budget, currency) : ''}
+                  </div>
+                </div>
+                <div class="cat-actions">
+                  <button class="icon-btn" data-edit="${c.id}" title="Editar" aria-label="Editar">✏️</button>
+                  <button class="icon-btn" data-del="${c.id}" title="Eliminar" aria-label="Eliminar">🗑️</button>
+                </div>
+              </li>`).join('')}
+          </ul>
+        </section>` : '').join('')}
+    `;
+    container.querySelector('[data-action="new"]').addEventListener('click',
+      () => Forms.categoryForm({ onSaved: () => App.refresh() }));
+    container.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
+      const c = cats.find(x => x.id === b.dataset.edit);
+      Forms.categoryForm({ category: c, onSaved: () => App.refresh() });
+    }));
+    container.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
+      const id = b.dataset.del;
+      const c = cats.find(x => x.id === id);
+      const count = counts.get(id) || 0;
+      if (count > 0) {
+        UI.toast(`No puedes eliminar "${c.name}": tiene ${count} transacciones asociadas.`, 'error');
+        return;
+      }
+      const ok = await UI.confirm({
+        title: 'Eliminar categoría', message: `¿Eliminar "${c.name}"?`,
+        confirmText: 'Eliminar', danger: true
+      });
+      if (!ok) return;
+      const r = Store.deleteCategory(id);
+      if (r.ok) { UI.toast('Categoría eliminada', 'success'); App.refresh(); }
+      else UI.toast('No se pudo eliminar la categoría', 'error');
+    }));
+  }
+  return { render };
+})();
+
+/* --- Budgets --- */
+Views.budgets = (function () {
+  function progressBar(spent, budget) {
+    const pct = budget > 0 ? (spent / budget) * 100 : 0;
+    const cls = pct >= 100 ? 'danger' : pct >= 80 ? 'warn' : '';
+    return `<div class="progress"><div class="progress-bar ${cls}" style="width:${Math.min(100, pct)}%"></div></div>
+      <div class="muted small">${pct.toFixed(0)}% usado${
+        pct >= 100 ? ' · ¡Excedido!' : pct >= 80 ? ' · Cerca del límite' : ''}</div>`;
+  }
+  function render(container) {
+    const s = Store.getSettings();
+    const currency = s.currency;
+    const fmt = n => Utils.formatMoney(n, currency);
+    const month = Utils.currentMonthKey();
+    const totals = new Map(Store.expenseByCategory(month).map(x => [x.categoryId, x.total]));
+    const cats = Store.get().categories.filter(c => c.type === 'expense' || c.type === 'both');
+    const withBudget = cats.filter(c => c.budget > 0);
+    const withoutBudget = cats.filter(c => !(c.budget > 0));
+    const totalBudget = withBudget.reduce((a, c) => a + c.budget, 0);
+    const totalSpent = withBudget.reduce((a, c) => a + (totals.get(c.id) || 0), 0);
+    container.innerHTML = `
+      <header class="page-head">
+        <div><h1>🎯 Presupuestos</h1><p class="muted">${Utils.monthLabel(month)}</p></div>
+        <div class="actions"><button class="btn btn-primary" data-action="edit-global">Presupuesto global</button></div>
+      </header>
+      <section class="card">
+        <div class="card-head"><h3>Global</h3><span class="muted">${s.globalBudget ? fmt(s.globalBudget) : 'No definido'}</span></div>
+        ${s.globalBudget
+          ? progressBar(Store.monthTotals(month).expense, s.globalBudget)
+          : '<p class="muted">Define un presupuesto global mensual para controlar tu gasto total.</p>'}
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Categorías con presupuesto</h3>
+          <span class="muted">${fmt(totalSpent)} de ${fmt(totalBudget)}</span></div>
+        ${withBudget.length ? withBudget.map(c => {
+          const spent = totals.get(c.id) || 0;
+          return `<div class="budget-row">
+            <div class="budget-head">
+              <span class="chip" style="background:${c.color}22;color:${c.color}">${c.icon} ${Utils.escapeHtml(c.name)}</span>
+              <span class="muted small">${fmt(spent)} / ${fmt(c.budget)}</span>
+            </div>
+            ${progressBar(spent, c.budget)}
+            <div class="budget-actions"><button class="link" data-edit-budget="${c.id}">Editar presupuesto</button></div>
+          </div>`;
+        }).join('') : '<p class="muted">Aún no has definido presupuestos por categoría.</p>'}
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Añadir presupuesto a categorías</h3></div>
+        <ul class="cat-list">
+          ${withoutBudget.map(c => `<li class="cat-item">
+            <span class="cat-icon" style="background:${c.color}22;color:${c.color}">${c.icon}</span>
+            <div class="cat-info"><div class="cat-name">${Utils.escapeHtml(c.name)}</div>
+              <div class="muted small">Sin presupuesto</div></div>
+            <button class="btn btn-ghost" data-edit-budget="${c.id}">Definir</button>
+          </li>`).join('') || '<li class="muted">Todas las categorías tienen presupuesto.</li>'}
+        </ul>
+      </section>
+    `;
+    container.querySelector('[data-action="edit-global"]').addEventListener('click', () => {
+      const form = document.createElement('form');
+      form.innerHTML = `<div class="field"><label>Presupuesto mensual global</label>
+        <input type="number" name="gb" min="0" step="0.01"
+               value="${s.globalBudget ?? ''}" placeholder="Sin límite"></div>`;
+      const footer = document.createElement('div');
+      footer.className = 'modal-actions';
+      footer.innerHTML = `<button type="button" class="btn btn-ghost" data-act="c">Cancelar</button>
+        <button type="button" class="btn btn-primary" data-act="s">Guardar</button>`;
+      const m = UI.modal({ title: 'Presupuesto global', body: form, footer });
+      footer.querySelector('[data-act="c"]').onclick = () => m.close();
+      footer.querySelector('[data-act="s"]').onclick = () => {
+        const v = parseFloat(form.querySelector('input').value);
+        Store.updateSettings({ globalBudget: isFinite(v) && v > 0 ? v : null });
+        UI.toast('Presupuesto actualizado', 'success');
+        m.close(); App.refresh();
+      };
+    });
+    container.querySelectorAll('[data-edit-budget]').forEach(b => b.addEventListener('click', () => {
+      const c = Store.categoryById(b.dataset.editBudget);
+      if (!c) return;
+      const form = document.createElement('form');
+      form.innerHTML = `<div class="field"><label>Presupuesto mensual para ${Utils.escapeHtml(c.name)}</label>
+        <input type="number" name="b" min="0" step="0.01"
+               value="${c.budget ?? ''}" placeholder="Sin presupuesto"></div>`;
+      const footer = document.createElement('div');
+      footer.className = 'modal-actions';
+      footer.innerHTML = `<button type="button" class="btn btn-ghost" data-act="c">Cancelar</button>
+        <button type="button" class="btn btn-primary" data-act="s">Guardar</button>`;
+      const m = UI.modal({ title: 'Presupuesto de categoría', body: form, footer });
+      footer.querySelector('[data-act="c"]').onclick = () => m.close();
+      footer.querySelector('[data-act="s"]').onclick = () => {
+        const v = parseFloat(form.querySelector('input').value);
+        Store.updateCategory(c.id, { budget: isFinite(v) && v > 0 ? v : null });
+        UI.toast('Presupuesto actualizado', 'success');
+        m.close(); App.refresh();
+      };
+    }));
+  }
+  return { render };
+})();
+
+/* --- Reports --- */
+Views.reports = (function () {
+  function render(container) {
+    const s = Store.getSettings();
+    const currency = s.currency;
+    const fmt = n => Utils.formatMoney(n, currency);
+    const now = new Date();
+    let month = `${now.getFullYear()}-${Utils.pad(now.getMonth() + 1)}`;
+    container.innerHTML = `
+      <header class="page-head">
+        <div><h1>📈 Reportes</h1><p class="muted">Análisis de tus finanzas</p></div>
+        <div class="actions">
+          <button class="btn btn-ghost" data-action="csv">⬇ CSV</button>
+          <button class="btn btn-ghost" data-action="json">⬇ JSON</button>
+          <button class="btn btn-ghost" data-action="import">⬆ Importar JSON</button>
+          <button class="btn btn-ghost" data-action="print">🖨 Imprimir</button>
+        </div>
+      </header>
+      <section class="card">
+        <div class="filter-row">
+          <div class="field"><label>Mes</label><input type="month" id="r-month" value="${month}"></div>
+        </div>
+      </section>
+      <div id="report-body"></div>
+    `;
+    const monthInput = container.querySelector('#r-month');
+    const body = container.querySelector('#report-body');
+    function renderMonth() {
+      month = monthInput.value || month;
+      const totals = Store.monthTotals(month);
+      const list = Store.transactionsInMonth(month);
+      const catMap = new Map(Store.get().categories.map(c => [c.id, c]));
+      const byCat = Store.expenseByCategory(month).map(x => ({
+        ...x, cat: catMap.get(x.categoryId) || { name: 'Sin categoría', icon: '🏷️', color: '#94a3b8' }
+      }));
+      const top5 = byCat.slice(0, 5);
+      const daysInMonth = new Date(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0).getDate();
+      const isCurrent = month === Utils.currentMonthKey();
+      const elapsedDays = isCurrent ? new Date().getDate() : daysInMonth;
+      const dailyAvg = elapsedDays > 0 ? totals.expense / elapsedDays : 0;
+      const projection = isCurrent ? dailyAvg * daysInMonth : totals.expense;
+      const year = month.slice(0, 4);
+      const annual = [];
+      for (let m = 1; m <= 12; m++) {
+        const mk = `${year}-${Utils.pad(m)}`;
+        annual.push({ mk, ...Store.monthTotals(mk) });
+      }
+      body.innerHTML = `
+        <section class="grid stats-grid">
+          <div class="stat-card"><div class="stat-label">Ingresos</div><div class="stat-value pos">${fmt(totals.income)}</div></div>
+          <div class="stat-card"><div class="stat-label">Gastos</div><div class="stat-value neg">${fmt(totals.expense)}</div></div>
+          <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value ${totals.balance >= 0 ? 'pos' : 'neg'}">${fmt(totals.balance)}</div></div>
+          <div class="stat-card"><div class="stat-label">Promedio diario de gasto</div><div class="stat-value">${fmt(dailyAvg)}</div>
+            <div class="muted small">${isCurrent ? 'Proyección fin de mes: ' + fmt(projection) : ''}</div></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Top 5 categorías de gasto</h3></div>
+          ${top5.length ? `<ol class="top-list">${top5.map((x, i) => `
+            <li><span class="rank">${i + 1}</span>
+              <span class="chip" style="background:${x.cat.color}22;color:${x.cat.color}">${x.cat.icon} ${Utils.escapeHtml(x.cat.name)}</span>
+              <span class="top-amount">${fmt(x.total)}</span>
+            </li>`).join('')}</ol>` : '<p class="muted">Sin gastos en este mes.</p>'}
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Desglose por categoría</h3></div>
+          ${byCat.length ? `<div class="table-wrap"><table class="table">
+            <thead><tr><th>Categoría</th><th class="num">Total</th><th class="num">% del gasto</th></tr></thead>
+            <tbody>${byCat.map(x => `<tr>
+              <td><span class="chip" style="background:${x.cat.color}22;color:${x.cat.color}">${x.cat.icon} ${Utils.escapeHtml(x.cat.name)}</span></td>
+              <td class="num">${fmt(x.total)}</td>
+              <td class="num">${totals.expense > 0 ? ((x.total / totals.expense) * 100).toFixed(1) : 0}%</td>
+            </tr>`).join('')}</tbody>
+          </table></div>` : '<p class="muted">Sin datos.</p>'}
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Resumen anual ${year}</h3></div>
+          <div class="table-wrap"><table class="table">
+            <thead><tr><th>Mes</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Balance</th></tr></thead>
+            <tbody>${annual.map(a => `<tr>
+              <td>${Utils.monthLabel(a.mk)}</td>
+              <td class="num pos">${fmt(a.income)}</td>
+              <td class="num neg">${fmt(a.expense)}</td>
+              <td class="num ${a.balance >= 0 ? 'pos' : 'neg'}">${fmt(a.balance)}</td>
+            </tr>`).join('')}</tbody>
+            <tfoot><tr><th>Total</th>
+              <th class="num">${fmt(annual.reduce((a, x) => a + x.income, 0))}</th>
+              <th class="num">${fmt(annual.reduce((a, x) => a + x.expense, 0))}</th>
+              <th class="num">${fmt(annual.reduce((a, x) => a + x.balance, 0))}</th>
+            </tr></tfoot>
+          </table></div>
+        </section>
+        <section class="card">
+          <div class="card-head"><h3>Transacciones del mes</h3><span class="muted">${list.length}</span></div>
+          ${list.length ? `<div class="table-wrap"><table class="table">
+            <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th class="num">Monto</th></tr></thead>
+            <tbody>${list.slice().sort((a, b) => a.date.localeCompare(b.date)).map(t => {
+              const c = catMap.get(t.categoryId) || { name: 'Sin categoría', icon: '🏷️', color: '#94a3b8' };
+              return `<tr>
+                <td>${Utils.formatDate(t.date, s.dateFormat)}</td>
+                <td>${t.type === 'income' ? 'Ingreso' : 'Gasto'}</td>
+                <td><span class="chip" style="background:${c.color}22;color:${c.color}">${c.icon} ${Utils.escapeHtml(c.name)}</span></td>
+                <td>${Utils.escapeHtml(t.description || '—')}</td>
+                <td class="num ${t.type === 'income' ? 'pos' : 'neg'}">${t.type === 'income' ? '+' : '−'}${fmt(t.amount)}</td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table></div>` : '<p class="muted">Sin transacciones.</p>'}
+        </section>
+      `;
+    }
+    monthInput.addEventListener('change', renderMonth);
+    renderMonth();
+    container.querySelector('[data-action="csv"]').addEventListener('click', () => {
+      Utils.download(`fintrack-${Utils.todayISO()}.csv`, Store.exportCSV(), 'text/csv;charset=utf-8');
+      UI.toast('CSV exportado', 'success');
+    });
+    container.querySelector('[data-action="json"]').addEventListener('click', () => {
+      Utils.download(`fintrack-${Utils.todayISO()}.json`, Store.exportJSON(), 'application/json');
+      UI.toast('JSON exportado', 'success');
+    });
+    container.querySelector('[data-action="import"]').addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'application/json,.json';
+      input.onchange = async () => {
+        const file = input.files[0]; if (!file) return;
+        try {
+          const obj = JSON.parse(await file.text());
+          const ok = await UI.confirm({
+            title: 'Importar datos',
+            message: 'Esto reemplazará TODOS tus datos actuales. ¿Continuar?',
+            confirmText: 'Importar', danger: true
+          });
+          if (!ok) return;
+          Store.importJSON(obj);
+          UI.toast('Datos importados', 'success');
+          App.refresh();
+        } catch (e) {
+          console.error(e);
+          UI.toast('Archivo inválido: ' + e.message, 'error');
+        }
+      };
+      input.click();
+    });
+    container.querySelector('[data-action="print"]').addEventListener('click', () => window.print());
+  }
+  return { render };
+})();
+
+/* --- Settings --- */
+Views.settings = (function () {
+  const CURRENCIES = [
+    ['USD', 'Dólar estadounidense'], ['EUR', 'Euro'], ['MXN', 'Peso mexicano'],
+    ['COP', 'Peso colombiano'], ['ARS', 'Peso argentino'], ['CLP', 'Peso chileno'],
+    ['PEN', 'Sol peruano'], ['BRL', 'Real brasileño'], ['GBP', 'Libra esterlina'],
+    ['CAD', 'Dólar canadiense'], ['JPY', 'Yen japonés']
+  ];
+  function render(container) {
+    const s = Store.getSettings();
+    container.innerHTML = `
+      <header class="page-head">
+        <div><h1>⚙️ Configuración</h1><p class="muted">Personaliza tu experiencia</p></div>
+      </header>
+      <section class="card">
+        <div class="card-head"><h3>Perfil</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre</label>
+            <input id="set-name" type="text" value="${Utils.escapeHtml(s.userName || '')}" placeholder="¿Cómo te llamas?">
+          </div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Preferencias</h3></div>
+        <div class="form-grid">
+          <div class="field"><label>Moneda</label>
+            <select id="set-currency">
+              ${CURRENCIES.map(([c, n]) => `<option value="${c}" ${s.currency === c ? 'selected' : ''}>${c} — ${n}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Formato de fecha</label>
+            <select id="set-dateformat">
+              ${['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'].map(f => `<option value="${f}" ${s.dateFormat === f ? 'selected' : ''}>${f}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field"><label>Tema</label>
+            <select id="set-theme">
+              <option value="light" ${s.theme === 'light' ? 'selected' : ''}>Claro</option>
+              <option value="dark"  ${s.theme === 'dark'  ? 'selected' : ''}>Oscuro</option>
+            </select>
+          </div>
+          <div class="field"><label>Presupuesto mensual global</label>
+            <input id="set-gb" type="number" min="0" step="0.01"
+                   value="${s.globalBudget ?? ''}" placeholder="Sin límite">
+          </div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Datos</h3></div>
+        <div class="actions-row">
+          <button class="btn btn-ghost" id="btn-export-json">⬇ Exportar JSON</button>
+          <button class="btn btn-ghost" id="btn-export-csv">⬇ Exportar CSV</button>
+          <button class="btn btn-ghost" id="btn-import">⬆ Importar JSON</button>
+          <button class="btn btn-ghost" id="btn-sample">🎲 Cargar datos de ejemplo</button>
+          <button class="btn btn-danger" id="btn-clear">🗑 Borrar todos los datos</button>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Atajos de teclado</h3></div>
+        <ul class="shortcuts">
+          <li><kbd>N</kbd> Nuevo ingreso</li>
+          <li><kbd>G</kbd> Nuevo gasto</li>
+          <li><kbd>/</kbd> Ir a buscador</li>
+          <li><kbd>Esc</kbd> Cerrar modal</li>
+        </ul>
+      </section>
+      <p class="muted small center">FinTrack v1.0 · Todos los datos se almacenan localmente en tu navegador.</p>
+    `;
+    const bind = (sel, ev, fn) => { const el = container.querySelector(sel); if (el) el.addEventListener(ev, fn); };
+    bind('#set-name', 'input', Utils.debounce(e => Store.updateSettings({ userName: e.target.value.trim() }), 400));
+    bind('#set-currency', 'change', e => { Store.updateSettings({ currency: e.target.value }); App.refresh(); });
+    bind('#set-dateformat', 'change', e => Store.updateSettings({ dateFormat: e.target.value }));
+    bind('#set-theme', 'change', e => {
+      Store.updateSettings({ theme: e.target.value });
+      App.applyTheme();
+      App.refresh();
+    });
+    bind('#set-gb', 'change', e => {
+      const v = parseFloat(e.target.value);
+      Store.updateSettings({ globalBudget: isFinite(v) && v > 0 ? v : null });
+      UI.toast('Presupuesto guardado', 'success');
+    });
+    bind('#btn-export-json', 'click', () => {
+      Utils.download(`fintrack-${Utils.todayISO()}.json`, Store.exportJSON(), 'application/json');
+      UI.toast('JSON exportado', 'success');
+    });
+    bind('#btn-export-csv', 'click', () => {
+      Utils.download(`fintrack-${Utils.todayISO()}.csv`, Store.exportCSV(), 'text/csv;charset=utf-8');
+      UI.toast('CSV exportado', 'success');
+    });
+    bind('#btn-import', 'click', () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = 'application/json,.json';
+      input.onchange = async () => {
+        const file = input.files[0]; if (!file) return;
+        try {
+          const obj = JSON.parse(await file.text());
+          const ok = await UI.confirm({
+            title: 'Importar', message: 'Esto reemplazará todos tus datos actuales. ¿Continuar?',
+            confirmText: 'Importar', danger: true
+          });
+          if (!ok) return;
+          Store.importJSON(obj);
+          UI.toast('Datos importados', 'success');
+          App.refresh();
+        } catch (e) { UI.toast('Archivo inválido: ' + e.message, 'error'); }
+      };
+      input.click();
+    });
+    bind('#btn-sample', 'click', async () => {
+      const ok = await UI.confirm({
+        title: 'Cargar datos de ejemplo',
+        message: 'Se añadirán transacciones de ejemplo a tus datos actuales. ¿Continuar?',
+        confirmText: 'Cargar'
+      });
+      if (!ok) return;
+      Store.seedSample();
+      UI.toast('Datos de ejemplo cargados', 'success');
+      App.refresh();
+    });
+    bind('#btn-clear', 'click', async () => {
+      const ok1 = await UI.confirm({
+        title: 'Borrar todos los datos',
+        message: 'Se eliminarán TODAS tus transacciones, categorías personalizadas y configuración. ¿Continuar?',
+        confirmText: 'Sí, continuar', danger: true
+      });
+      if (!ok1) return;
+      const ok2 = await UI.confirm({
+        title: 'Confirmación final',
+        message: 'Esta acción es irreversible. ¿Estás totalmente seguro?',
+        confirmText: 'Borrar todo', danger: true
+      });
+      if (!ok2) return;
+      Store.clearAll();
+      UI.toast('Datos borrados', 'success');
+      App.applyTheme();
+      App.refresh();
+    });
+  }
+  return { render };
+})();
+
+/* ============ 7) APP ============ */
+const App = (function () {
+  const NAV = [
+    { key: 'dashboard',  label: 'Dashboard',     icon: '📊' },
+    { key: 'incomes',    label: 'Ingresos',      icon: '💰' },
+    { key: 'expenses',   label: 'Gastos',        icon: '💸' },
+    { key: 'categories', label: 'Categorías',    icon: '🏷️' },
+    { key: 'budgets',    label: 'Presupuestos',  icon: '🎯' },
+    { key: 'reports',    label: 'Reportes',      icon: '📈' },
+    { key: 'settings',   label: 'Configuración', icon: '⚙️' }
+  ];
+  const ROUTES = {
+    dashboard:  () => Views.dashboard,
+    incomes:    () => Views.income,
+    expenses:   () => Views.expense,
+    categories: () => Views.categories,
+    budgets:    () => Views.budgets,
+    reports:    () => Views.reports,
+    settings:   () => Views.settings
+  };
+  let currentRoute = 'dashboard';
+
+  function buildNav() {
+    const html = NAV.map(n =>
+      `<a class="nav-item" href="#${n.key}" data-route="${n.key}">
+        <span class="nav-icon">${n.icon}</span>
+        <span class="nav-label">${n.label}</span>
+      </a>`).join('');
+    document.getElementById('desktop-nav').innerHTML = html;
+    document.getElementById('bottom-nav').innerHTML = html;
+  }
+  function setActive(route) {
+    document.querySelectorAll('.nav-item').forEach(el => {
+      const isActive = el.dataset.route === route;
+      el.classList.toggle('active', isActive);
+      if (isActive) el.setAttribute('aria-current', 'page');
+      else el.removeAttribute('aria-current');
+    });
+  }
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', Store.getSettings().theme || 'light');
+  }
+  function render() {
+    const main = document.getElementById('main');
+    const route = (location.hash || '#dashboard').slice(1).split('?')[0] || 'dashboard';
+    currentRoute = ROUTES[route] ? route : 'dashboard';
+    setActive(currentRoute);
+    main.innerHTML = '';
+    window.scrollTo({ top: 0 });
+    try { ROUTES[currentRoute]().render(main); }
+    catch (e) {
+      console.error('FinTrack render error:', e);
+      main.innerHTML = `<div class="card"><h2>Algo salió mal</h2>
+        <p class="muted">${Utils.escapeHtml(e.message || 'Error desconocido')}</p></div>`;
+    }
+  }
+  function refresh() {
+    const active = document.activeElement;
+    const fkey = active && active.dataset ? active.dataset.filter : null;
+    const selStart = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+    render();
+    if (fkey) {
+      const el = document.querySelector(`[data-filter="${fkey}"]`);
+      if (el) {
+        el.focus();
+        if (selStart != null && el.setSelectionRange) {
+          try { el.setSelectionRange(selStart, selStart); } catch (e) { /* noop */ }
+        }
+      }
+    }
+  }
+  function setupShortcuts() {
+    document.addEventListener('keydown', e => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (document.querySelector('.modal-overlay')) return;
+      const k = e.key.toLowerCase();
+      if (k === 'n') { e.preventDefault(); Forms.transactionForm({ type: 'income', onSaved: refresh }); }
+      else if (k === 'g') { e.preventDefault(); Forms.transactionForm({ type: 'expense', onSaved: refresh }); }
+      else if (k === '/') {
+        e.preventDefault();
+        const search = document.querySelector('[data-filter="q"]');
+        if (search) search.focus();
+        else if (currentRoute === 'dashboard') location.hash = '#expenses';
+      }
+    });
+  }
+  function boot() {
+    try { Store.init(); }
+    catch (e) { console.error(e); UI.toast('Error al cargar los datos', 'error'); }
+    applyTheme();
+    buildNav();
+    setupShortcuts();
+    try {
+      const created = Store.processRecurring();
+      if (created) UI.toast(`${created} transacción(es) recurrente(s) registrada(s)`, 'info');
+    } catch (e) { console.error(e); }
+    window.addEventListener('hashchange', render);
+    window.addEventListener('resize', Utils.debounce(() => {
+      if (currentRoute === 'dashboard') refresh();
+    }, 250));
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const next = Store.getSettings().theme === 'dark' ? 'light' : 'dark';
+        Store.updateSettings({ theme: next });
+        applyTheme(); refresh();
+      });
+    }
+    if (!location.hash) location.hash = '#dashboard';
+    render();
+  }
+  return { boot, refresh, applyTheme, render };
+})();
+
+/* Arranque */
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', App.boot);
+else App.boot();
+
+})();
+</script>
+</body>
+</html>
